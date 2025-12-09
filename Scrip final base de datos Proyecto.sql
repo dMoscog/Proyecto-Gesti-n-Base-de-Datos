@@ -1,13 +1,13 @@
 /*
 =============================================================================
-UNIVERSIDAD TECNOL”GICA DE M…XICO
-PROYECTO FINAL: GESTI”N DE BASES DE DATOS
+UNIVERSIDAD TECNOL√ìGICA DE M√âXICO
+PROYECTO FINAL: GESTI√ìN DE BASES DE DATOS
 SISTEMA INTEGRAL DE SEGUROS A NIVEL CONTINENTAL
 =============================================================================
-DescripciÛn: Script DDL y DML para la creaciÛn de la estructura de base de datos,
-             procedimientos almacenados, triggers, vistas y configuraciÛn de
-             replicaciÛn simulada.
-Autor:       David Mosco Gasca
+Descripci√≥n: Script DDL y DML para la creaci√≥n de la estructura de base de datos,
+             procedimientos almacenados, triggers, vistas y configuraci√≥n de
+             replicaci√≥n simulada.
+Autor:       David Mosco Gasca y Diego Antonio Savi√±on Escamilla
 Fecha:       Noviembre 2025
 =============================================================================
 */
@@ -21,11 +21,11 @@ GO
 
 /*
 =============================================================================
-1. DEFINICI”N DE TABLAS (DDL)
+1. DEFINICI√ìN DE TABLAS (DDL)
 =============================================================================
 */
 
--- Tabla de Clientes: Almacena la informaciÛn personal y de contacto.
+-- Tabla de Clientes: Almacena la informaci√≥n personal y de contacto.
 CREATE TABLE Clientes (
     cliente_id INT PRIMARY KEY IDENTITY(1,1),
     nombre_completo VARCHAR(100) NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE Agentes (
     estado VARCHAR(20) NOT NULL -- Activo / Inactivo
 );
 
--- Tabla Central de PÛlizas: Registro maestro de contratos.
+-- Tabla Central de P√≥lizas: Registro maestro de contratos.
 CREATE TABLE Polizas (
     poliza_id INT PRIMARY KEY IDENTITY(1,1),
     cliente_id INT NOT NULL,
@@ -64,8 +64,8 @@ CREATE TABLE Polizas (
     FOREIGN KEY (cliente_id) REFERENCES Clientes(cliente_id)
 );
 
--- Tablas para SimulaciÛn de FragmentaciÛn Horizontal (Nodos Regionales)
--- Nodo 1: Registros exclusivos de la regiÛn MÈxico.
+-- Tablas para Simulaci√≥n de Fragmentaci√≥n Horizontal (Nodos Regionales)
+-- Nodo 1: Registros exclusivos de la regi√≥n M√©xico.
 CREATE TABLE Polizas_Nodo_Mexico (
     poliza_id INT PRIMARY KEY,
     cliente_id INT,
@@ -75,7 +75,7 @@ CREATE TABLE Polizas_Nodo_Mexico (
     fecha_registro_nodo DATETIME DEFAULT GETDATE()
 );
 
--- Nodo 2: Registros internacionales (USA, Canad·, Latam, Europa).
+-- Nodo 2: Registros internacionales (USA, Canad√°, Latam, Europa).
 CREATE TABLE Polizas_Nodo_Internacional (
     poliza_id INT PRIMARY KEY,
     cliente_id INT,
@@ -86,14 +86,14 @@ CREATE TABLE Polizas_Nodo_Internacional (
     fecha_registro_nodo DATETIME DEFAULT GETDATE()
 );
 
--- Tabla de Siniestros: Registro de incidentes asociados a pÛlizas.
+-- Tabla de Siniestros: Registro de incidentes asociados a p√≥lizas.
 CREATE TABLE Siniestros (
     siniestro_id INT PRIMARY KEY IDENTITY(1,1),
     poliza_id INT NOT NULL,
     fecha_reporte DATE DEFAULT GETDATE(),
     tipo_siniestro VARCHAR(50) NOT NULL,
     monto_estimado DECIMAL(10,2),
-    estado_siniestro VARCHAR(20) NOT NULL DEFAULT 'En revisiÛn', 
+    estado_siniestro VARCHAR(20) NOT NULL DEFAULT 'En revisi√≥n', 
     descripcion VARCHAR(MAX),
     agente_id INT,
     FOREIGN KEY (poliza_id) REFERENCES Polizas(poliza_id),
@@ -111,7 +111,7 @@ CREATE TABLE Pagos (
     FOREIGN KEY (poliza_id) REFERENCES Polizas(poliza_id)
 );
 
--- Tablas de AuditorÌa: Trazabilidad y Seguridad.
+-- Tablas de Auditor√≠a: Trazabilidad y Seguridad.
 CREATE TABLE Auditoria_General (
     auditoria_id INT PRIMARY KEY IDENTITY(1,1), 
     tabla_afectada VARCHAR(50) NOT NULL,
@@ -133,7 +133,7 @@ GO
 
 /*
 =============================================================================
-2. ÕNDICES DE RENDIMIENTO
+2. √çNDICES DE RENDIMIENTO
 =============================================================================
 */
 CREATE INDEX IDX_Polizas_Tipo_Region ON Polizas (tipo_poliza, region);
@@ -147,7 +147,7 @@ GO
 =============================================================================
 */
 
--- Vista para monitoreo de pÛlizas prÛximas a vencer (30 dÌas).
+-- Vista para monitoreo de p√≥lizas pr√≥ximas a vencer (30 d√≠as).
 CREATE VIEW vw_Alertas_Vencimiento AS
 SELECT 
     P.poliza_id,
@@ -170,7 +170,7 @@ GO
 4. DATOS INICIALES (Semilla del Sistema)
 =============================================================================
 */
--- InserciÛn de usuarios base para administraciÛn.
+-- Inserci√≥n de usuarios base para administraci√≥n.
 SET IDENTITY_INSERT Agentes ON;
 INSERT INTO Agentes (agente_id, nombre_completo, region, puesto, usuario, contrasena, estado) 
 VALUES (1, 'Admin Global Corp', 'Global', 'Administrador Global', 'admin', 'adminpass', 'Activo');
@@ -183,11 +183,11 @@ GO
 
 /*
 =============================================================================
-5. PROCEDIMIENTOS ALMACENADOS (LÛgica de Negocio)
+5. PROCEDIMIENTOS ALMACENADOS (L√≥gica de Negocio)
 =============================================================================
 */
 
--- SP: ValidaciÛn de Credenciales (Login).
+-- SP: Validaci√≥n de Credenciales (Login).
 CREATE PROCEDURE sp_validar_agente @p_usuario VARCHAR(50), @p_contrasena VARCHAR(100) AS 
 BEGIN 
     SET NOCOUNT ON; 
@@ -195,13 +195,13 @@ BEGIN
     SELECT @v_agente_id = agente_id, @v_nombre_completo = nombre_completo, @v_puesto = puesto, @v_estado = estado, @v_contrasena_db = LTRIM(RTRIM(contrasena)) 
     FROM Agentes WHERE UPPER(LTRIM(RTRIM(usuario))) = UPPER(LTRIM(RTRIM(@p_usuario))); 
     IF @v_agente_id IS NULL BEGIN SELECT NULL AS agente_id, 'Error: Usuario no encontrado.' AS nombre_completo, NULL AS puesto, CAST(0 AS BIT) AS autenticado; RETURN; END; 
-    IF @v_estado <> 'Activo' BEGIN SELECT NULL, 'Error: El agente no est· activo.', NULL, CAST(0 AS BIT); RETURN; END; 
-    IF LTRIM(RTRIM(@p_contrasena)) <> @v_contrasena_db BEGIN SELECT NULL, 'Error: ContraseÒa incorrecta.', NULL, CAST(0 AS BIT); RETURN; END; 
+    IF @v_estado <> 'Activo' BEGIN SELECT NULL, 'Error: El agente no est√° activo.', NULL, CAST(0 AS BIT); RETURN; END; 
+    IF LTRIM(RTRIM(@p_contrasena)) <> @v_contrasena_db BEGIN SELECT NULL, 'Error: Contrase√±a incorrecta.', NULL, CAST(0 AS BIT); RETURN; END; 
     SELECT @v_agente_id, @v_nombre_completo, @v_puesto, CAST(1 AS BIT) AS autenticado; 
 END;
 GO
 
--- SP: CreaciÛn de Agentes (AdministraciÛn).
+-- SP: Creaci√≥n de Agentes (Administraci√≥n).
 CREATE PROCEDURE sp_admin_crear_agente @p_nombre_completo VARCHAR(100), @p_region VARCHAR(50), @p_puesto VARCHAR(50), @p_usuario VARCHAR(50), @p_contrasena VARCHAR(100) AS 
 BEGIN 
     SET NOCOUNT ON; 
@@ -214,7 +214,7 @@ BEGIN
 END;
 GO
 
--- SP: Registro de Siniestros con TransacciÛn AtÛmica.
+-- SP: Registro de Siniestros con Transacci√≥n At√≥mica.
 CREATE PROCEDURE sp_registrar_siniestro
     @p_poliza_id INT,
     @p_tipo_siniestro VARCHAR(50),
@@ -231,10 +231,10 @@ BEGIN
         DECLARE @v_estado_poliza VARCHAR(30);
         SELECT @v_estado_poliza = estado_poliza FROM Polizas WHERE poliza_id = @p_poliza_id;
         
-        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: La PÛliza ID no existe.', 1; END;
+        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: La P√≥liza ID no existe.', 1; END;
         IF @v_estado_poliza NOT IN ('Activa', 'Con Siniestro Reportado')
         BEGIN
-            THROW 50002, 'Error: La pÛliza no est· activa. No se puede registrar el siniestro.', 1;
+            THROW 50002, 'Error: La p√≥liza no est√° activa. No se puede registrar el siniestro.', 1;
         END;
 
         INSERT INTO Siniestros (poliza_id, tipo_siniestro, monto_estimado, descripcion, agente_id)
@@ -253,8 +253,8 @@ BEGIN
 END;
 GO
 
--- SP: Registro de Pagos y RenovaciÛn Autom·tica.
--- Incluye lÛgica para reactivar pÛlizas Vencidas o Suspendidas.
+-- SP: Registro de Pagos y Renovaci√≥n Autom√°tica.
+-- Incluye l√≥gica para reactivar p√≥lizas Vencidas o Suspendidas.
 CREATE PROCEDURE sp_registrar_pago
     @p_poliza_id INT,
     @p_monto DECIMAL(10,2),
@@ -272,13 +272,13 @@ BEGIN
         SELECT @v_estado_poliza = estado_poliza, @v_prima = prima_anual 
         FROM Polizas WHERE poliza_id = @p_poliza_id;
 
-        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: PÛliza no encontrada.', 1; END;
-        IF @v_estado_poliza = 'Cancelada' BEGIN THROW 50003, 'Error: PÛliza Cancelada. Pago rechazado.', 1; END;
+        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: P√≥liza no encontrada.', 1; END;
+        IF @v_estado_poliza = 'Cancelada' BEGIN THROW 50003, 'Error: P√≥liza Cancelada. Pago rechazado.', 1; END;
 
         INSERT INTO Pagos (poliza_id, monto, metodo_pago, estado_pago)
         VALUES (@p_poliza_id, @p_monto, @p_metodo_pago, 'Confirmado');
 
-        -- LÛgica de renovaciÛn/reactivaciÛn
+        -- L√≥gica de renovaci√≥n/reactivaci√≥n
         IF @p_monto >= (@v_prima * 0.9)
         BEGIN
             IF @v_estado_poliza = 'Vencida'
@@ -307,17 +307,17 @@ BEGIN
 END;
 GO
 
--- SP: CancelaciÛn de PÛliza (Transaccional).
+-- SP: Cancelaci√≥n de P√≥liza (Transaccional).
 CREATE PROCEDURE sp_cancelar_poliza @p_poliza_id INT, @p_usuario_web VARCHAR(50) AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
         BEGIN TRANSACTION;
-        IF NOT EXISTS (SELECT 1 FROM Polizas WHERE poliza_id = @p_poliza_id) THROW 50001, 'Error: PÛliza inexistente.', 1;
+        IF NOT EXISTS (SELECT 1 FROM Polizas WHERE poliza_id = @p_poliza_id) THROW 50001, 'Error: P√≥liza inexistente.', 1;
         UPDATE Polizas SET estado_poliza = 'Cancelada' WHERE poliza_id = @p_poliza_id;
-        INSERT INTO Pagos (poliza_id, monto, metodo_pago, estado_pago) VALUES (@p_poliza_id, 0, 'ReversiÛn', 'Revertido');
+        INSERT INTO Pagos (poliza_id, monto, metodo_pago, estado_pago) VALUES (@p_poliza_id, 0, 'Reversi√≥n', 'Revertido');
         COMMIT TRANSACTION;
-        SELECT CAST(1 AS BIT), 'PÛliza cancelada correctamente.';
+        SELECT CAST(1 AS BIT), 'P√≥liza cancelada correctamente.';
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -332,7 +332,7 @@ GO
 CREATE PROCEDURE sp_reporte_avanzado_corporativo AS
 BEGIN
     SET NOCOUNT ON;
-    -- 1. Ranking de PaÌses y ClasificaciÛn de Riesgo
+    -- 1. Ranking de Pa√≠ses y Clasificaci√≥n de Riesgo
     SELECT TOP 5
         C.pais AS Pais,
         SUM(P.prima_anual) AS Prima_Total,
@@ -345,7 +345,7 @@ BEGIN
     FROM Polizas P JOIN Clientes C ON P.cliente_id = C.cliente_id
     GROUP BY C.pais ORDER BY Ranking_Global;
 
-    -- 2. PIVOT: Siniestros por Mes y PaÌs
+    -- 2. PIVOT: Siniestros por Mes y Pa√≠s
     SELECT * FROM 
     (
         SELECT C.pais, DATENAME(month, S.fecha_reporte) AS Mes, S.siniestro_id 
@@ -372,22 +372,22 @@ CREATE PROCEDURE sp_auditor_ver_fallos_transaccion AS BEGIN SET NOCOUNT ON; SELE
 GO
 CREATE PROCEDURE sp_crear_cliente @p_nombre_completo VARCHAR(100), @p_email VARCHAR(100), @p_telefono VARCHAR(20), @p_direccion VARCHAR(150), @p_pais VARCHAR(50), @p_tipo_documento VARCHAR(20), @p_numero_documento VARCHAR(30), @p_usuario_web VARCHAR(50) AS BEGIN SET NOCOUNT ON; INSERT INTO Clientes (nombre_completo, email, telefono, direccion, pais, tipo_documento, numero_documento) VALUES (@p_nombre_completo, @p_email, @p_telefono, @p_direccion, @p_pais, @p_tipo_documento, @p_numero_documento); SELECT CAST(1 AS BIT), 'Cliente registrado.'; END;
 GO
-CREATE PROCEDURE sp_crear_poliza @p_cliente_id INT, @p_tipo_poliza VARCHAR(50), @p_cobertura VARCHAR(100), @p_prima_anual DECIMAL(10,2), @p_fecha_inicio DATE, @p_fecha_fin DATE, @p_region_poliza VARCHAR(50), @p_usuario_web VARCHAR(50) AS BEGIN SET NOCOUNT ON; INSERT INTO Polizas (cliente_id, tipo_poliza, cobertura, prima_anual, fecha_inicio, fecha_fin, estado_poliza, region) VALUES (@p_cliente_id, @p_tipo_poliza, @p_cobertura, @p_prima_anual, @p_fecha_inicio, @p_fecha_fin, 'Activa', @p_region_poliza); SELECT CAST(1 AS BIT), 'PÛliza creada.'; END;
+CREATE PROCEDURE sp_crear_poliza @p_cliente_id INT, @p_tipo_poliza VARCHAR(50), @p_cobertura VARCHAR(100), @p_prima_anual DECIMAL(10,2), @p_fecha_inicio DATE, @p_fecha_fin DATE, @p_region_poliza VARCHAR(50), @p_usuario_web VARCHAR(50) AS BEGIN SET NOCOUNT ON; INSERT INTO Polizas (cliente_id, tipo_poliza, cobertura, prima_anual, fecha_inicio, fecha_fin, estado_poliza, region) VALUES (@p_cliente_id, @p_tipo_poliza, @p_cobertura, @p_prima_anual, @p_fecha_inicio, @p_fecha_fin, 'Activa', @p_region_poliza); SELECT CAST(1 AS BIT), 'P√≥liza creada.'; END;
 GO
 CREATE PROCEDURE sp_admin_actualizar_estado_agente @p_agente_id INT, @p_nuevo_estado VARCHAR(20) AS BEGIN SET NOCOUNT ON; UPDATE Agentes SET estado = @p_nuevo_estado WHERE agente_id = @p_agente_id; SELECT CAST(1 AS BIT), 'Estado actualizado.'; END;
 GO
-CREATE PROCEDURE sp_admin_reset_password @p_agente_id INT, @p_nueva_contrasena VARCHAR(100) AS BEGIN SET NOCOUNT ON; UPDATE Agentes SET contrasena = @p_nueva_contrasena WHERE agente_id = @p_agente_id; SELECT CAST(1 AS BIT), 'ContraseÒa actualizada.'; END;
+CREATE PROCEDURE sp_admin_reset_password @p_agente_id INT, @p_nueva_contrasena VARCHAR(100) AS BEGIN SET NOCOUNT ON; UPDATE Agentes SET contrasena = @p_nueva_contrasena WHERE agente_id = @p_agente_id; SELECT CAST(1 AS BIT), 'Contrase√±a actualizada.'; END;
 GO
 CREATE PROCEDURE sp_consultar_historial_siniestros @p_cliente_id INT = NULL, @p_pais_cliente VARCHAR(50) = NULL, @p_tipo_poliza VARCHAR(50) = NULL, @p_poliza_id INT = NULL AS BEGIN SET NOCOUNT ON; SELECT S.siniestro_id, S.fecha_reporte, S.tipo_siniestro, S.estado_siniestro, S.monto_estimado, C.nombre_completo AS nombre_cliente, P.tipo_poliza AS tipo_poliza_asociada, C.pais AS pais_cliente FROM Siniestros S JOIN Polizas P ON S.poliza_id = P.poliza_id JOIN Clientes C ON P.cliente_id = C.cliente_id WHERE (@p_cliente_id IS NULL OR C.cliente_id = @p_cliente_id) AND (@p_pais_cliente IS NULL OR C.pais LIKE @p_pais_cliente + '%') AND (@p_tipo_poliza IS NULL OR P.tipo_poliza LIKE @p_tipo_poliza + '%') AND (@p_poliza_id IS NULL OR P.poliza_id = @p_poliza_id) ORDER BY S.fecha_reporte DESC; END;
 GO
 
 /*
 =============================================================================
-6. TRIGGERS (AutomatizaciÛn y Seguridad)
+6. TRIGGERS (Automatizaci√≥n y Seguridad)
 =============================================================================
 */
 
--- Trigger: ValidaciÛn de vigencia antes de registrar siniestro.
+-- Trigger: Validaci√≥n de vigencia antes de registrar siniestro.
 CREATE TRIGGER trg_Validar_Vigencia_Siniestro
 ON Siniestros
 INSTEAD OF INSERT
@@ -399,7 +399,7 @@ BEGIN
         WHERE P.estado_poliza NOT IN ('Activa', 'Con Siniestro Reportado')
     )
     BEGIN
-        RAISERROR('Error (TRG): La pÛliza no est· activa. Siniestro rechazado.', 16, 1);
+        RAISERROR('Error (TRG): La p√≥liza no est√° activa. Siniestro rechazado.', 16, 1);
         RETURN;
     END
     INSERT INTO Siniestros (poliza_id, fecha_reporte, tipo_siniestro, monto_estimado, estado_siniestro, descripcion, agente_id)
@@ -407,15 +407,15 @@ BEGIN
 END;
 GO
 
--- Trigger: SimulaciÛn de FragmentaciÛn y ReplicaciÛn Horizontal.
--- Distribuye los datos a nodos regionales seg˙n el paÌs de origen.
+-- Trigger: Simulaci√≥n de Fragmentaci√≥n y Replicaci√≥n Horizontal.
+-- Distribuye los datos a nodos regionales seg√∫n el pa√≠s de origen.
 CREATE OR ALTER TRIGGER trg_Replicacion_Fragmentacion
 ON Polizas
 AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- Replicar hacia el Nodo MÈxico
+    -- Replicar hacia el Nodo M√©xico
     INSERT INTO Polizas_Nodo_Mexico (poliza_id, cliente_id, tipo_poliza, prima_anual, estado_poliza)
     SELECT i.poliza_id, i.cliente_id, i.tipo_poliza, i.prima_anual, i.estado_poliza
     FROM inserted i WHERE i.region = 'Mexico';
@@ -425,7 +425,7 @@ BEGIN
     SELECT i.poliza_id, i.cliente_id, i.tipo_poliza, i.prima_anual, i.estado_poliza, i.region
     FROM inserted i WHERE i.region <> 'Mexico';
 
-    -- AuditorÌa de la replicaciÛn
+    -- Auditor√≠a de la replicaci√≥n
     DECLARE @count_mx INT, @count_int INT;
     SELECT @count_mx = COUNT(*) FROM inserted WHERE region = 'Mexico';
     SELECT @count_int = COUNT(*) FROM inserted WHERE region <> 'Mexico';
@@ -434,17 +434,17 @@ BEGIN
     BEGIN
         INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio)
         VALUES ('Polizas', 'REPLICACION', 'SystemTrigger', 
-                'ReplicaciÛn completada: ' + CAST(@count_mx AS VARCHAR) + ' a Nodo MX, ' + CAST(@count_int AS VARCHAR) + ' a Nodo INT.');
+                'Replicaci√≥n completada: ' + CAST(@count_mx AS VARCHAR) + ' a Nodo MX, ' + CAST(@count_int AS VARCHAR) + ' a Nodo INT.');
     END
 END;
 GO
 
--- Triggers de AuditorÌa (UPDATE, INSERT, DELETE en PÛlizas)
-CREATE TRIGGER trg_Audit_Polizas_UPDATE ON Polizas AFTER UPDATE AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'PÛliza ID: ' + CAST(i.poliza_id AS VARCHAR) + ' cambiÛ estado de [' + d.estado_poliza + '] a [' + i.estado_poliza + '].' FROM inserted i JOIN deleted d ON i.poliza_id = d.poliza_id WHERE i.estado_poliza <> d.estado_poliza; IF @Detalles IS NOT NULL INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'UPDATE', SUSER_SNAME(), @Detalles); END;
+-- Triggers de Auditor√≠a (UPDATE, INSERT, DELETE en P√≥lizas)
+CREATE TRIGGER trg_Audit_Polizas_UPDATE ON Polizas AFTER UPDATE AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'P√≥liza ID: ' + CAST(i.poliza_id AS VARCHAR) + ' cambi√≥ estado de [' + d.estado_poliza + '] a [' + i.estado_poliza + '].' FROM inserted i JOIN deleted d ON i.poliza_id = d.poliza_id WHERE i.estado_poliza <> d.estado_poliza; IF @Detalles IS NOT NULL INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'UPDATE', SUSER_SNAME(), @Detalles); END;
 GO
-CREATE TRIGGER trg_Audit_Polizas_INSERT ON Polizas AFTER INSERT AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'Nueva PÛliza ID: ' + CAST(i.poliza_id AS VARCHAR) + ', Cliente: ' + CAST(i.cliente_id AS VARCHAR) + ', Tipo: ' + i.tipo_poliza + ', Estado: ' + i.estado_poliza FROM inserted i; INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'INSERT', SUSER_SNAME(), @Detalles); END;
+CREATE TRIGGER trg_Audit_Polizas_INSERT ON Polizas AFTER INSERT AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'Nueva P√≥liza ID: ' + CAST(i.poliza_id AS VARCHAR) + ', Cliente: ' + CAST(i.cliente_id AS VARCHAR) + ', Tipo: ' + i.tipo_poliza + ', Estado: ' + i.estado_poliza FROM inserted i; INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'INSERT', SUSER_SNAME(), @Detalles); END;
 GO
-CREATE TRIGGER trg_Audit_Polizas_DELETE ON Polizas AFTER DELETE AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'PÛliza Borrada ID: ' + CAST(d.poliza_id AS VARCHAR) + ', Cliente: ' + CAST(d.cliente_id AS VARCHAR) FROM deleted d; INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'DELETE', SUSER_SNAME(), @Detalles); END;
+CREATE TRIGGER trg_Audit_Polizas_DELETE ON Polizas AFTER DELETE AS BEGIN SET NOCOUNT ON; DECLARE @Detalles VARCHAR(MAX); SELECT @Detalles = 'P√≥liza Borrada ID: ' + CAST(d.poliza_id AS VARCHAR) + ', Cliente: ' + CAST(d.cliente_id AS VARCHAR) FROM deleted d; INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio) VALUES ('Polizas', 'DELETE', SUSER_SNAME(), @Detalles); END;
 GO
 
 
@@ -468,7 +468,7 @@ BEGIN
         IF @v_poliza_id IS NULL BEGIN THROW 50001, 'Error: Siniestro no encontrado.', 1; END;
         UPDATE Siniestros 
         SET estado_siniestro = @p_nuevo_estado,
-            descripcion = descripcion + ' | ActualizaciÛn (' + CONVERT(VARCHAR, GETDATE(), 23) + '): ' + @p_comentarios
+            descripcion = descripcion + ' | Actualizaci√≥n (' + CONVERT(VARCHAR, GETDATE(), 23) + '): ' + @p_comentarios
         WHERE siniestro_id = @p_siniestro_id;
         IF @p_nuevo_estado IN ('Pagado', 'Rechazado', 'Concluido')
         BEGIN
@@ -477,12 +477,12 @@ BEGIN
             WHERE poliza_id = @v_poliza_id;
         END
 
-        -- 4. AuditorÌa
+        -- 4. Auditor√≠a
         INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio)
         VALUES ('Siniestros', 'UPDATE', @p_usuario_web, 'Siniestro ID ' + CAST(@p_siniestro_id AS VARCHAR) + ' cambiado a ' + @p_nuevo_estado);
 
         COMMIT TRANSACTION;
-        SELECT CAST(1 AS BIT) AS resultado, 'Siniestro actualizado y pÛliza liberada.' AS mensaje;
+        SELECT CAST(1 AS BIT) AS resultado, 'Siniestro actualizado y p√≥liza liberada.' AS mensaje;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -496,9 +496,9 @@ GO
 
 /*
 =============================================================================
-SCRIPT DE IMPLEMENTACI”N: FRAGMENTACI”N VERTICAL (CORREGIDO)
+SCRIPT DE IMPLEMENTACI√ìN: FRAGMENTACI√ìN VERTICAL (CORREGIDO)
 =============================================================================
-DescripciÛn: Divide la tabla monolÌtica 'Clientes' en dos fragmentos lÛgicos
+Descripci√≥n: Divide la tabla monol√≠tica 'Clientes' en dos fragmentos l√≥gicos
              para separar datos generales de datos sensibles.
 Autor:       David Mosco Gasca
 =============================================================================
@@ -507,9 +507,9 @@ Autor:       David Mosco Gasca
 USE CorporateInsuranceDB;
 GO
 
-PRINT '>>> INICIANDO FRAGMENTACI”N VERTICAL DE CLIENTES...';
+PRINT '>>> INICIANDO FRAGMENTACI√ìN VERTICAL DE CLIENTES...';
 
--- Iniciamos transacciÛn para asegurar integridad
+-- Iniciamos transacci√≥n para asegurar integridad
 BEGIN TRANSACTION;
 
 BEGIN TRY
@@ -518,7 +518,7 @@ BEGIN TRY
     -- 1. CREAR LAS NUEVAS TABLAS FRAGMENTADAS
     -- =========================================================
     
-    -- A. Tabla General (Datos P˙blicos)
+    -- A. Tabla General (Datos P√∫blicos)
     IF OBJECT_ID('Clientes_General', 'U') IS NULL
     BEGIN
         CREATE TABLE Clientes_General (
@@ -535,7 +535,7 @@ BEGIN TRY
     IF OBJECT_ID('Clientes_Sensible', 'U') IS NULL
     BEGIN
         CREATE TABLE Clientes_Sensible (
-            cliente_id INT PRIMARY KEY, -- RelaciÛn 1:1
+            cliente_id INT PRIMARY KEY, -- Relaci√≥n 1:1
             telefono VARCHAR(20),
             direccion VARCHAR(150),
             tipo_documento VARCHAR(20),
@@ -546,7 +546,7 @@ BEGIN TRY
     END
 
     -- =========================================================
-    -- 2. MIGRACI”N DE DATOS
+    -- 2. MIGRACI√ìN DE DATOS
     -- =========================================================
     -- Solo migramos si la tabla original 'Clientes' existe y tiene datos
     IF OBJECT_ID('Clientes', 'U') IS NOT NULL
@@ -569,10 +569,10 @@ BEGIN TRY
     END
 
     -- =========================================================
-    -- 3. ELIMINACI”N SEGURA DE LA TABLA ANTIGUA
+    -- 3. ELIMINACI√ìN SEGURA DE LA TABLA ANTIGUA
     -- =========================================================
     
-    -- A. Eliminar FK en 'Polizas' que apunta a 'Clientes' (Din·mico)
+    -- A. Eliminar FK en 'Polizas' que apunta a 'Clientes' (Din√°mico)
     DECLARE @sql NVARCHAR(MAX) = '';
     
     SELECT @sql += 'ALTER TABLE Polizas DROP CONSTRAINT ' + name + ';'
@@ -583,7 +583,7 @@ BEGIN TRY
     IF @sql <> ''
     BEGIN
         EXEC sp_executesql @sql;
-        PRINT '4. RestricciÛn FK antigua eliminada din·micamente.';
+        PRINT '4. Restricci√≥n FK antigua eliminada din√°micamente.';
     END
 
     -- B. Eliminar tabla antigua 'Clientes'
@@ -603,16 +603,16 @@ BEGIN TRY
     END
 
     -- =========================================================
-    -- 4. ACTUALIZACI”N DE OBJETOS (SPs)
+    -- 4. ACTUALIZACI√ìN DE OBJETOS (SPs)
     -- =========================================================
     
-    -- (AquÌ van los ALTER PROCEDURE que ya tenÌas, ejecutados dentro de la transacciÛn)
+    -- (Aqu√≠ van los ALTER PROCEDURE que ya ten√≠as, ejecutados dentro de la transacci√≥n)
     -- Nota: SQL Server requiere que los CREATE/ALTER PROCEDURE sean el primer comando del batch.
     -- Por eso, en un script transaccional complejo, a veces es mejor usar EXEC sp_executesql
-    -- o simplemente confirmar la transacciÛn aquÌ y luego correr los SPs.
+    -- o simplemente confirmar la transacci√≥n aqu√≠ y luego correr los SPs.
     
     COMMIT TRANSACTION;
-    PRINT '>>> FRAGMENTACI”N ESTRUCTURAL COMPLETADA EXITOSAMENTE <<<';
+    PRINT '>>> FRAGMENTACI√ìN ESTRUCTURAL COMPLETADA EXITOSAMENTE <<<';
 
 END TRY
 BEGIN CATCH
@@ -622,7 +622,7 @@ END CATCH;
 GO
 
 -- =========================================================
--- 5. REGENERACI”N DE PROCEDIMIENTOS (Fuera de la transacciÛn)
+-- 5. REGENERACI√ìN DE PROCEDIMIENTOS (Fuera de la transacci√≥n)
 -- =========================================================
 
 -- SP CREAR CLIENTE
@@ -776,7 +776,7 @@ BEGIN
 END;
 GO
 
-PRINT '>>> ACTUALIZACI”N DE SPs COMPLETADA <<<';
+PRINT '>>> ACTUALIZACI√ìN DE SPs COMPLETADA <<<';
 
 
 
@@ -788,15 +788,15 @@ PRINT '>>> APLICANDO CANDADOS DE SEGURIDAD FINANCIERA...';
 BEGIN TRANSACTION;
 
 BEGIN TRY
-    -- 1. ProtecciÛn en PÛlizas (Prima Anual no puede ser negativa)
+    -- 1. Protecci√≥n en P√≥lizas (Prima Anual no puede ser negativa)
     IF NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CK_Polizas_Prima_Positiva')
     BEGIN
         ALTER TABLE Polizas
         ADD CONSTRAINT CK_Polizas_Prima_Positiva CHECK (prima_anual >= 0);
-        PRINT '1. Candado aplicado en PÛlizas (Prima >= 0).';
+        PRINT '1. Candado aplicado en P√≥lizas (Prima >= 0).';
     END
 
-    -- 2. ProtecciÛn en Siniestros (Monto Estimado no puede ser negativo)
+    -- 2. Protecci√≥n en Siniestros (Monto Estimado no puede ser negativo)
     IF NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CK_Siniestros_Monto_Positivo')
     BEGIN
         ALTER TABLE Siniestros
@@ -804,7 +804,7 @@ BEGIN TRY
         PRINT '2. Candado aplicado en Siniestros (Monto >= 0).';
     END
 
-    -- 3. ProtecciÛn en Pagos (El pago debe ser estrictamente mayor a 0)
+    -- 3. Protecci√≥n en Pagos (El pago debe ser estrictamente mayor a 0)
     IF NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CK_Pagos_Monto_Positivo')
     BEGIN
         ALTER TABLE Pagos
@@ -829,9 +829,9 @@ USE CorporateInsuranceDB;
 GO
 
 -- =========================================================
--- CORRECCI”N: ACTUALIZAR SP_CREAR_POLIZA
--- DescripciÛn: Apuntar a 'Clientes_General' en lugar de 'Clientes'
---              porque la tabla original ya no existe por la fragmentaciÛn.
+-- CORRECCI√ìN: ACTUALIZAR SP_CREAR_POLIZA
+-- Descripci√≥n: Apuntar a 'Clientes_General' en lugar de 'Clientes'
+--              porque la tabla original ya no existe por la fragmentaci√≥n.
 -- =========================================================
 
 CREATE OR ALTER PROCEDURE sp_crear_poliza
@@ -855,17 +855,17 @@ BEGIN
             THROW 50001, 'Error: El Cliente ID proporcionado no existe.', 1; 
         END;
 
-        -- 2. Insertar la PÛliza
-        -- Nota: La FK en la tabla Polizas ya apunta a Clientes_General, asÌ que esto pasar· sin problemas.
+        -- 2. Insertar la P√≥liza
+        -- Nota: La FK en la tabla Polizas ya apunta a Clientes_General, as√≠ que esto pasar√° sin problemas.
         INSERT INTO Polizas (cliente_id, tipo_poliza, cobertura, prima_anual, fecha_inicio, fecha_fin, estado_poliza, region)
         VALUES (@p_cliente_id, @p_tipo_poliza, @p_cobertura, @p_prima_anual, @p_fecha_inicio, @p_fecha_fin, 'Activa', @p_region_poliza);
 
-        -- 3. AuditorÌa
+        -- 3. Auditor√≠a
         INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio)
-        VALUES ('Polizas', 'INSERT', @p_usuario_web, 'Nueva PÛliza para Cliente ID ' + CAST(@p_cliente_id AS VARCHAR));
+        VALUES ('Polizas', 'INSERT', @p_usuario_web, 'Nueva P√≥liza para Cliente ID ' + CAST(@p_cliente_id AS VARCHAR));
 
         COMMIT TRANSACTION;
-        SELECT CAST(1 AS BIT) AS resultado_operacion, 'PÛliza registrada exitosamente.' AS mensaje_salida;
+        SELECT CAST(1 AS BIT) AS resultado_operacion, 'P√≥liza registrada exitosamente.' AS mensaje_salida;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -890,7 +890,7 @@ GO
 USE CorporateInsuranceDB;
 GO
 
--- 1. Crear Tabla de ConfiguraciÛn
+-- 1. Crear Tabla de Configuraci√≥n
 IF OBJECT_ID('Configuracion_Sistema', 'U') IS NULL
 BEGIN
     CREATE TABLE Configuracion_Sistema (
@@ -901,13 +901,13 @@ BEGIN
     
     -- Insertar valor por defecto (90%)
     INSERT INTO Configuracion_Sistema (clave, valor, descripcion)
-    VALUES ('PORCENTAJE_PAGO_REACTIVACION', '0.90', 'Porcentaje mÌnimo de la prima para reactivar pÛliza');
+    VALUES ('PORCENTAJE_PAGO_REACTIVACION', '0.90', 'Porcentaje m√≠nimo de la prima para reactivar p√≥liza');
     
-    PRINT 'Tabla de ConfiguraciÛn creada.';
+    PRINT 'Tabla de Configuraci√≥n creada.';
 END
 GO
 
--- 2. Actualizar SP de Pagos para usar el valor din·mico
+-- 2. Actualizar SP de Pagos para usar el valor din√°mico
 CREATE OR ALTER PROCEDURE sp_registrar_pago
     @p_poliza_id INT,
     @p_monto DECIMAL(10,2),
@@ -923,23 +923,23 @@ BEGIN
         DECLARE @v_prima DECIMAL(10,2);
         DECLARE @v_porcentaje_minimo DECIMAL(10,2);
         
-        -- Obtener datos de la pÛliza
+        -- Obtener datos de la p√≥liza
         SELECT @v_estado_poliza = estado_poliza, @v_prima = prima_anual 
         FROM Polizas WHERE poliza_id = @p_poliza_id;
 
-        -- Obtener regla de negocio din·mica (Si no existe, usa 0.9 por defecto)
+        -- Obtener regla de negocio din√°mica (Si no existe, usa 0.9 por defecto)
         SELECT @v_porcentaje_minimo = CAST(valor AS DECIMAL(10,2))
         FROM Configuracion_Sistema WHERE clave = 'PORCENTAJE_PAGO_REACTIVACION';
         
         IF @v_porcentaje_minimo IS NULL SET @v_porcentaje_minimo = 0.90;
 
-        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: PÛliza no encontrada.', 1; END;
-        IF @v_estado_poliza = 'Cancelada' BEGIN THROW 50003, 'Error: PÛliza Cancelada. Pago rechazado.', 1; END;
+        IF @v_estado_poliza IS NULL BEGIN THROW 50001, 'Error: P√≥liza no encontrada.', 1; END;
+        IF @v_estado_poliza = 'Cancelada' BEGIN THROW 50003, 'Error: P√≥liza Cancelada. Pago rechazado.', 1; END;
 
         INSERT INTO Pagos (poliza_id, monto, metodo_pago, estado_pago)
         VALUES (@p_poliza_id, @p_monto, @p_metodo_pago, 'Confirmado');
 
-        -- LÛgica de renovaciÛn/reactivaciÛn DIN¡MICA
+        -- L√≥gica de renovaci√≥n/reactivaci√≥n DIN√ÅMICA
         IF @p_monto >= (@v_prima * @v_porcentaje_minimo)
         BEGIN
             IF @v_estado_poliza = 'Vencida'
@@ -999,7 +999,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
-    -- Nodo MÈxico
+    -- Nodo M√©xico
     INSERT INTO Cola_Replicacion (tabla_destino, datos_json)
     SELECT 'Polizas_Nodo_Mexico', 
            '{"id":' + CAST(i.poliza_id AS VARCHAR) + ', "cliente":' + CAST(i.cliente_id AS VARCHAR) + '}'
@@ -1024,7 +1024,7 @@ BEGIN
     -- Actualizar Cola
     UPDATE Cola_Replicacion SET estado = 'PROCESADO' WHERE estado = 'PENDIENTE';
 
-    -- AuditorÌa
+    -- Auditor√≠a
     INSERT INTO Auditoria_General (tabla_afectada, accion, usuario, detalles_cambio)
     VALUES ('Polizas', 'REPLICACION_COLA', 'SystemTrigger', 'Datos encolados y procesados exitosamente.');
 END;
@@ -1038,7 +1038,7 @@ USE CorporateInsuranceDB;
 GO
 
 -- ============================================================
--- 1. CORRECCI”N: LISTAR AGENTES (Alinear con Python)
+-- 1. CORRECCI√ìN: LISTAR AGENTES (Alinear con Python)
 -- ============================================================
 
 
@@ -1061,7 +1061,7 @@ END;
 GO
 
 -- ============================================================
--- 2. CORRECCI”N: LISTAR P”LIZAS (Alinear con Python)
+-- 2. CORRECCI√ìN: LISTAR P√ìLIZAS (Alinear con Python)
 -- ============================================================
 
 CREATE OR ALTER PROCEDURE sp_reporte_listar_polizas 
@@ -1074,7 +1074,7 @@ BEGIN
         C.nombre_completo AS nombre_cliente, 
         C.pais AS pais_cliente 
     FROM Polizas P 
-    JOIN Clientes_General C ON P.cliente_id = C.cliente_id -- Usamos Clientes_General por la fragmentaciÛn
+    JOIN Clientes_General C ON P.cliente_id = C.cliente_id -- Usamos Clientes_General por la fragmentaci√≥n
     WHERE (@p_cliente_id IS NULL OR P.cliente_id = @p_cliente_id) 
     ORDER BY P.poliza_id DESC; 
 END;
@@ -1090,7 +1090,7 @@ GO
 USE CorporateInsuranceDB;
 GO
 
--- Procedimiento para el reporte de desempeÒo de agentes
+-- Procedimiento para el reporte de desempe√±o de agentes
 CREATE OR ALTER PROCEDURE sp_reporte_desempeno_agentes
 AS
 BEGIN
@@ -1127,7 +1127,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Ranking de PaÌses (Sin cambios)
+    -- 1. Ranking de Pa√≠ses (Sin cambios)
     SELECT TOP 5
         G.pais AS Pais,
         SUM(P.prima_anual) AS Prima_Total,
@@ -1142,12 +1142,12 @@ BEGIN
     GROUP BY G.pais
     ORDER BY Ranking_Global;
 
-    -- 2. PIVOT BLINDADO (Forzamos nombres en EspaÒol usando CASE)
+    -- 2. PIVOT BLINDADO (Forzamos nombres en Espa√±ol usando CASE)
     SELECT * FROM 
     (
         SELECT 
             G.pais, 
-            -- AQUÕ EST¡ EL CAMBIO M¡GICO:
+            -- AQU√ç EST√Å EL CAMBIO M√ÅGICO:
             CASE MONTH(S.fecha_reporte)
                 WHEN 1 THEN 'Enero'
                 WHEN 2 THEN 'Febrero'
@@ -1173,6 +1173,7 @@ BEGIN
     ) AS PivotTable;
 END;
 GO
+
 
 
 select * from Clientes_General
